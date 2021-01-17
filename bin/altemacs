@@ -20,6 +20,10 @@ MAIN () {
         EMACSNAME="${PROGNAME}"
     fi
     export USER_EMACS_DIRECTORY="${HOME}/.emacs.${EMACSNAME}.d"
+    mkdir -p "${USER_EMACS_DIRECTORY}"
+    if [[ ! -e "${USER_EMACS_DIRECTORY}/init.el" ]] ; then
+        touch "${USER_EMACS_DIRECTORY}/init.el"
+    fi
     exec emacs "$@"
 }
 
