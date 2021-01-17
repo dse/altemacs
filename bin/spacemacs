@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+setup-altemacs
+
+SPACEMACS_DIR="${HOME}/.spacemacs.d"
+if [[ ! -d "${SPACEMACS_DIR}/.git" ]] ; then
+    git clone https://github.com/syl20bnr/spacemacs "${SPACEMACS_DIR}"
+fi
+
+export EMACS_USER_DIRECTORY="${SPACEMACS_DIR}"
+exec emacs "$@"

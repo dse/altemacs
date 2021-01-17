@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+MAIN () {
+    set-PROGNAME
+    put-our-dot-emacs-in-place
+    if [[ "${PROGNAME}" = "setup-altemacs" ]] ; then
+        exit 0
+    fi
+    if [[ "${PROGNAME}" = "altemacs" ]] ; then
+        if ! (( $# )) ; then
+            >&2 echo "${PROGNAME}: requires initial <name> argument"
+            exit 1
+        fi
+        EMACSNAME="$1"
+        shift
+    else
+        EMACSNAME="${PROGNAME}"
+    fi
+    export USER_EMACS_DIRECTORY="${HOME}/.emacs.${EMACSNAME}.d"
+    exec emacs "$@"
+}
+
+put-our-dot-emacs-in-place () {
+    if [[ -f ~/.emacs ]] ; then
+        if grep -F '%ALTEMACS%' ~/.emacs >/dev/null 2>/dev/null ; then
+            :                   # do nothing
+        elif grep -E . ~/.emacs >/dev/null 2>/dev/null ; then
+            >&2 echo "${PROGNAME}:"
+            >&2 echo "    Looks like you have a pre-existing ~/.emacs."
+            >&2 echo "    Please move it out of the way."
+            >&2 echo "    I suggest the following:"
+            >&2 echo "        mkdir ~/.emacs.d"
+            >&2 echo "        mv ~/.emacs ~/.emacs.d/init.el"
+            exit 1
+        else
+            cat-dot-emacs >~/.emacs
+        fi
+    elif [[ -e ~/.emacs ]] ; then
+        >&2 echo "${PROGNAME}:"
+        >&2 echo "    ~/.emacs exists but is not a file.  Please move it out of the way."
+        exit 1
+    else
+        cat-dot-emacs >~/.emacs
+    fi
+}
+
+cat-dot-emacs () { cat <<EOF; }
+;;; .emacs --- let the user choose the emacs environment to use
+
+;;; Commentary:
+;;;
+;;; This code mimics the behaviour of `startup.el' to let the usage of
+;;; the custom init directory behave just like the one and only
+;;; "~/.emacs.d".
+;;;
+;;; By setting the environment variable `EMACS_USER_DIRECTORY' the
+;;; user-emacs-directory can be chosen and if there is an `init.el'
+;;; the configuration from that directory will be used.  If the
+;;; environment variable is not set or there is no `init.el' the
+;;; default configuration directory `~/.emacs.d/' will be used.
+;;;
+;;; The variable `server-name' will be set to the name of the
+;;; directory chosen as start path.  So if the server will be started,
+;;; it can be reached with 'emacsclient -s servername'.
+;;;
+;;; This now works with a current version of spacemacs but does not
+;;; work with `async-start' in general, if the code executed with
+;;; `async' uses `user-init-dir' or makes other assumptions about the
+;;; Emacs start-directory.
+;;;
+;;; Based on:
+;;; https://emacs.stackexchange.com/a/20508
+;;;
+;;; %ALTEMACS% If you remove this line, altemacs may clobber this file.
+;;;            You may otherwise edit this file as needed.
+;;;
+;;; Code:
+(let* ((user-init-dir-default
+        (file-name-as-directory (concat "~" init-file-user "/.emacs.d")))
+       (user-init-dir
+        (file-name-as-directory (or (getenv "EMACS_USER_DIRECTORY")
+                                    user-init-dir-default)))
+       (user-init-file-1
+        (expand-file-name "init" user-init-dir)))
+  (setq user-emacs-directory user-init-dir)
+  (with-eval-after-load "server"
+    (setq server-name
+          (let ((server--name (file-name-nondirectory
+                               (directory-file-name user-emacs-directory))))
+            (if (equal server--name ".emacs.d")
+                "server"
+              server--name))))
+  (setq user-init-file t)
+  (load user-init-file-1 t t)
+  (when (eq user-init-file t)
+    (setq user-emacs-directory user-init-dir-default)
+    (load (expand-file-name "init" user-init-dir-default) t t)))
+
+(provide '.emacs)
+;;; .emacs ends here
+EOF
+
+set-PROGNAME () {
+    if which gbasename >/dev/null 2>/dev/null ; then
+        PROGNAME="$(gbasename "$0")"
+    elif which basename >/dev/null 2>/dev/null ; then
+        PROGNAME="$(basename "$0")"
+    else
+        PROGNAME="${0##*/}"
+    fi
+}
+
+###############################################################################
+MAIN "$@"
