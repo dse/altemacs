@@ -19,10 +19,10 @@ MAIN () {
     else
         EMACSNAME="${PROGNAME}"
     fi
-    export USER_EMACS_DIRECTORY="${HOME}/.emacs.${EMACSNAME}.d"
-    mkdir -p "${USER_EMACS_DIRECTORY}"
-    if [[ ! -e "${USER_EMACS_DIRECTORY}/init.el" ]] ; then
-        touch "${USER_EMACS_DIRECTORY}/init.el"
+    export EMACS_USER_DIRECTORY="${HOME}/.emacs.${EMACSNAME}.d"
+    mkdir -p "${EMACS_USER_DIRECTORY}"
+    if [[ ! -e "${EMACS_USER_DIRECTORY}/init.el" ]] ; then
+        touch "${EMACS_USER_DIRECTORY}/init.el"
     fi
     exec emacs "$@"
 }
@@ -56,23 +56,23 @@ cat-dot-emacs () { cat <<EOF; }
 
 ;;; Commentary:
 ;;;
-;;; This code mimics the behaviour of `startup.el' to let the usage of
+;;; This code mimics the behaviour of \`startup.el' to let the usage of
 ;;; the custom init directory behave just like the one and only
 ;;; "~/.emacs.d".
 ;;;
-;;; By setting the environment variable `EMACS_USER_DIRECTORY' the
-;;; user-emacs-directory can be chosen and if there is an `init.el'
+;;; By setting the environment variable \`EMACS_USER_DIRECTORY' the
+;;; user-emacs-directory can be chosen and if there is an \`init.el'
 ;;; the configuration from that directory will be used.  If the
-;;; environment variable is not set or there is no `init.el' the
-;;; default configuration directory `~/.emacs.d/' will be used.
+;;; environment variable is not set or there is no \`init.el' the
+;;; default configuration directory \`~/.emacs.d/' will be used.
 ;;;
-;;; The variable `server-name' will be set to the name of the
+;;; The variable \`server-name' will be set to the name of the
 ;;; directory chosen as start path.  So if the server will be started,
 ;;; it can be reached with 'emacsclient -s servername'.
 ;;;
 ;;; This now works with a current version of spacemacs but does not
-;;; work with `async-start' in general, if the code executed with
-;;; `async' uses `user-init-dir' or makes other assumptions about the
+;;; work with \`async-start' in general, if the code executed with
+;;; \`async' uses \`user-init-dir' or makes other assumptions about the
 ;;; Emacs start-directory.
 ;;;
 ;;; Based on:
